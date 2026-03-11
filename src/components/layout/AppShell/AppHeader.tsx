@@ -18,7 +18,6 @@ import {
 import { themeColorsApi } from '@/api/themeColors';
 import { cn } from '@/lib/utils';
 
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TicketNotificationBell from '@/components/TicketNotificationBell';
 
 // Icons
@@ -271,9 +270,6 @@ export function AppHeader({
 
               <div onClick={() => setMobileMenuOpen(false)}>
                 <TicketNotificationBell isAdmin={isAdminActive()} />
-              </div>
-              <div onClick={() => setMobileMenuOpen(false)}>
-                <LanguageSwitcher />
               </div>
 
               {/* Mobile menu button */}
