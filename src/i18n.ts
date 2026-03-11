@@ -2,16 +2,11 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+// zmey: only RU locale — other languages removed
 import ru from './locales/ru.json';
-import en from './locales/en.json';
-import zh from './locales/zh.json';
-import fa from './locales/fa.json';
 
 const resources = {
   ru: { translation: ru },
-  en: { translation: en },
-  zh: { translation: zh },
-  fa: { translation: fa },
 };
 
 i18n
@@ -20,7 +15,8 @@ i18n
   .init({
     resources,
     fallbackLng: 'ru',
-    supportedLngs: ['ru', 'en', 'zh', 'fa'],
+    supportedLngs: ['ru'],
+    lng: 'ru',
 
     detection: {
       order: ['localStorage', 'navigator'],
