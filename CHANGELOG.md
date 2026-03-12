@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.33.0](https://github.com/zmey93/bedolaga-cabinet/compare/v1.32.0...v1.33.0) (2026-03-12)
+
+
+### Features
+
+* настроен CI/CD для форка zmey93 ([d4bca12](https://github.com/zmey93/bedolaga-cabinet/commit/d4bca12797d65db198cece2a6893a71d2a4e73f4))
+* настроен CI/CD для форка zmey93 ([aedd783](https://github.com/zmey93/bedolaga-cabinet/commit/aedd78394482ca42c5363612418a86700dcf792a))
+* тест GitHub Actions CI/CD ([491e842](https://github.com/zmey93/bedolaga-cabinet/commit/491e842e4d81cf83f15288581ddcab1ef0dd8cc7))
+
+
+### Bug Fixes
+
+* fix Prettier formatting in LanguageSwitcher.tsx (unblock CI lint) ([f6ad06a](https://github.com/zmey93/bedolaga-cabinet/commit/f6ad06a48b50f449823618f6b36e7de70b1b2945))
+
 ## [1.32.0](https://github.com/BEDOLAGA-DEV/bedolaga-cabinet/compare/v1.31.0...v1.32.0) (2026-03-12)
 
 
