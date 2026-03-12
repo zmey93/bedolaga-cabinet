@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -38,6 +40,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get version info
+        id: version
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+          UPSTREAM=$(node -p "require('./package.json').version")
+          ZMEY=$(cat .zmey_version | tr -d '[:space:]')
+
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "🏷️ Building release version: $VERSION"
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            VERSION="v${UPSTREAM}z${ZMEY}-${SHORT_SHA}"
+            echo "🚀 Building main snapshot: $VERSION"
+          else
+            VERSION="pr-${SHORT_SHA}"
+            echo "🔀 Building PR version: $VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -49,8 +74,8 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.version.outputs.version }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -66,3 +91,13 @@ jobs:
             VITE_TELEGRAM_BOT_USERNAME=
             VITE_APP_NAME=Cabinet
             VITE_APP_LOGO=V
+
+      - name: Build Summary
+        run: |
+          echo "## 🚀 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`${{ steps.version.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ steps.version.outputs.short_sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Build Date** | \`${{ steps.version.outputs.build_date }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Registry** | \`ghcr.io/zmey93/bedolaga-cabinet\` |" >> $GITHUB_STEP_SUMMARY
