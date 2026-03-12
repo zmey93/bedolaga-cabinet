@@ -1,0 +1,101 @@
+name: Zmey Auto Release
+
+# Триггер: вручной запуск или push в main через флаг-файл .trigger-release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.trigger-release'   # создай этот файл когда хочешь релиз
+  workflow_dispatch:         # или запуск вручную через Actions → Run workflow
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read versions
+        id: versions
+        run: |
+          # Версия апстрима — из package.json
+          UPSTREAM=$(node -p "require('./package.json').version")
+          # Твоя версия — из .zmey_version
+          ZMEY=$(cat .zmey_version | tr -d '[:space:]')
+          TAG="v${UPSTREAM}z${ZMEY}"
+          echo "upstream=$UPSTREAM" >> $GITHUB_OUTPUT
+          echo "zmey=$ZMEY" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "📌 Tag will be: $TAG"
+
+      - name: Check tag does not exist
+        id: check_tag
+        run: |
+          TAG="${{ steps.versions.outputs.tag }}"
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Tag $TAG already exists — bump .zmey_version first!"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $TAG is new, proceeding."
+          fi
+
+      - name: Fail if tag exists
+        if: steps.check_tag.outputs.exists == 'true'
+        run: |
+          echo "::error::Tag ${{ steps.versions.outputs.tag }} already exists. Edit .zmey_version to increment (e.g. 0.1 → 0.2) and push again."
+          exit 1
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          TAG="${{ steps.versions.outputs.tag }}"
+          UPSTREAM="${{ steps.versions.outputs.upstream }}"
+          # Получить секцию текущей версии из zmey_changelog.md
+          ZMEY_VER="${{ steps.versions.outputs.zmey }}"
+          SECTION=$(awk "/^## \[${ZMEY_VER}\]/,/^## \[/" zmey_changelog.md 2>/dev/null | head -n -1)
+          # Фоллбэк — git log между последним тегом и HEAD
+          if [ -z "$SECTION" ]; then
+            PREV=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -z "$PREV" ]; then
+              SECTION="Первый релиз форка zmey93/bedolaga-cabinet"
+            else
+              SECTION=$(git log ${PREV}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            fi
+          fi
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$SECTION" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.versions.outputs.tag }}" -m "Release ${{ steps.versions.outputs.tag }}"
+          git push origin "${{ steps.versions.outputs.tag }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.versions.outputs.tag }}
+          name: "${{ steps.versions.outputs.tag }}"
+          body: |
+            ## Изменения форка zmey93 (v${{ steps.versions.outputs.zmey }})
+
+            ${{ steps.changelog.outputs.body }}
+
+            ---
+            > **Upstream**: [`BEDOLAGA-DEV/bedolaga-cabinet v${{ steps.versions.outputs.upstream }}`](https://github.com/BEDOLAGA-DEV/bedolaga-cabinet/releases/tag/v${{ steps.versions.outputs.upstream }})
+
+            ## Docker образ
+            ```bash
+            docker pull ghcr.io/zmey93/bedolaga-cabinet:${{ steps.versions.outputs.tag }}
+            docker pull ghcr.io/zmey93/bedolaga-cabinet:latest
+            ```
+          draft: false
+          prerelease: false

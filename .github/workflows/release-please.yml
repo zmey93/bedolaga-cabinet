@@ -1,25 +1,16 @@
-name: Release Please
+# ФАЙЛ ОТКЛЮЧЕН — заменён на zmey-release.yml
+# Release Please не поддерживает формат vX.Y.ZzN
+name: Release Please (disabled)
 
 on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pull-requests: write
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'This workflow is disabled'
+        required: false
 
 jobs:
-  release-please:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
-        with:
-          release-type: node
-          versioning-strategy: default
-          # Версия управляется ТОЛЬКО через Conventional Commits в этом форке.
-          # НЕ синхронизируется с версией оригинала (BEDOLAGA-DEV).
-          # Теги форка: v0.1.0, v0.2.0 и т.д. — независимо от upstream.
-          package-name: bedolaga-cabinet-zmey
-          changelog-path: zmey_changelog.md
-          include-v-in-tag: true
+      - run: echo 'Release Please disabled. Use zmey-release.yml instead.'
