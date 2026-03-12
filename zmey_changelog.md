@@ -1,5 +1,5 @@
 # ZMEY CHANGELOG — bedolaga-cabinet (fork)
-
+## Добавлена автосборка
 История изменений в форке [`zmey93/bedolaga-cabinet`](https://github.com/zmey93/bedolaga-cabinet) относительно оригинального репозитория [`BEDOLAGA-DEV/bedolaga-cabinet`](https://github.com/BEDOLAGA-DEV/bedolaga-cabinet).
 
 ---
