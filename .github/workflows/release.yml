@@ -36,50 +36,65 @@ jobs:
         env:
           VITE_API_URL: /api
           VITE_TELEGRAM_BOT_USERNAME:
-          VITE_APP_NAME: Bedolaga Cabinet
+          VITE_APP_NAME: Cabinet
           VITE_APP_LOGO: V
 
-      - name: Create dist archive
+      - name: Create dist archives
         run: |
           cd dist
-          tar -czf ../bedolaga-cabinet-${{ github.ref_name }}.tar.gz .
+          tar -czf ../bedolaga-cabinet-zmey-${{ github.ref_name }}.tar.gz .
           cd ..
-          zip -r bedolaga-cabinet-${{ github.ref_name }}.zip dist/
+          zip -r bedolaga-cabinet-zmey-${{ github.ref_name }}.zip dist/
 
-      - name: Generate changelog
+      - name: Generate changelog from zmey_changelog.md
         id: changelog
         run: |
-          # Get previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 ${{ github.ref_name }}^ 2>/dev/null || echo "")
-
-          if [ -z "$PREV_TAG" ]; then
-            echo "changelog=First release" >> $GITHUB_OUTPUT
-          else
-            CHANGELOG=$(git log ${PREV_TAG}..${{ github.ref_name }} --pretty=format:"- %s (%h)" --no-merges)
-            echo "changelog<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGELOG" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+          # Достаём секцию для текущего тега из zmey_changelog.md
+          TAG_VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          SECTION=$(awk "/^## \[${TAG_VERSION}\]/,/^## \[/" zmey_changelog.md | head -n -1)
+          if [ -z "$SECTION" ]; then
+            # Если секции нет - берём git log между тегами
+            PREV_TAG=$(git describe --tags --abbrev=0 ${{ github.ref_name }}^ 2>/dev/null || echo "")
+            if [ -z "$PREV_TAG" ]; then
+              SECTION="Первый релиз форка zmey93/bedolaga-cabinet"
+            else
+              SECTION=$(git log ${PREV_TAG}..${{ github.ref_name }} --pretty=format:"- %s (%h)" --no-merges)
+            fi
           fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$SECTION" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get upstream version from package.json
+        id: upstream
+        run: |
+          UPSTREAM_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$UPSTREAM_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          name: "${{ github.ref_name }} (upstream v${{ steps.upstream.outputs.version }})"
           body: |
-            ## Changes
+            ## Изменения форка zmey93
 
             ${{ steps.changelog.outputs.changelog }}
 
-            ## Docker Image
+            ---
+            > **Upstream версия**: [`BEDOLAGA-DEV/bedolaga-cabinet v${{ steps.upstream.outputs.version }}`](https://github.com/BEDOLAGA-DEV/bedolaga-cabinet/releases/tag/v${{ steps.upstream.outputs.version }})
+
+            ## Docker образ
 
             ```bash
-            docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            docker pull ghcr.io/zmey93/bedolaga-cabinet:${{ github.ref_name }}
+            docker pull ghcr.io/zmey93/bedolaga-cabinet:latest
             ```
 
-            ## Installation
+            ## Установка
 
-            See [README.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md) for installation instructions.
+            Смотри [README.md](https://github.com/zmey93/bedolaga-cabinet/blob/${{ github.ref_name }}/README.md)
           files: |
-            bedolaga-cabinet-${{ github.ref_name }}.tar.gz
-            bedolaga-cabinet-${{ github.ref_name }}.zip
+            bedolaga-cabinet-zmey-${{ github.ref_name }}.tar.gz
+            bedolaga-cabinet-zmey-${{ github.ref_name }}.zip
           draft: false
           prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}

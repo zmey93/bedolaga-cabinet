@@ -16,3 +16,10 @@ jobs:
       - uses: googleapis/release-please-action@v4
         with:
           release-type: node
+          versioning-strategy: default
+          # Версия управляется ТОЛЬКО через Conventional Commits в этом форке.
+          # НЕ синхронизируется с версией оригинала (BEDOLAGA-DEV).
+          # Теги форка: v0.1.0, v0.2.0 и т.д. — независимо от upstream.
+          package-name: bedolaga-cabinet-zmey
+          changelog-path: zmey_changelog.md
+          include-v-in-tag: true
