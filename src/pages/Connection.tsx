@@ -35,16 +35,6 @@ export default function Connection() {
     navigate(-1);
   }, [navigate]);
 
-  const handleOpenQR = useCallback(() => {
-    navigate('/connection/qr', {
-      replace: !isTelegramWebApp,
-      state: {
-        url: appConfig?.subscriptionUrl,
-        hideLink: appConfig?.hideLink ?? false,
-      },
-    });
-  }, [navigate, appConfig?.subscriptionUrl, appConfig?.hideLink]);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -194,7 +184,6 @@ export default function Connection() {
       onOpenDeepLink={openDeepLink}
       isTelegramWebApp={isTelegramWebApp}
       onGoBack={handleGoBack}
-      onOpenQR={handleOpenQR}
     />
   );
 }
