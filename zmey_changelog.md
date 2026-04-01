@@ -35,6 +35,19 @@
 ---
 
 <!-- Новые секции добавляй выше этой строки:
+## [v1.43.1z0.1] — 2026-04-01
+
+### Upstream
+- База: [`BEDOLAGA-DEV/bedolaga-cabinet v1.43.1`](https://github.com/BEDOLAGA-DEV/bedolaga-cabinet/releases/tag/v1.43.1)
+
+### Слияние и правки
+- **Слияние upstream**: Обновление с 1.32.0 до 1.43.1
+- **Конфликты**:
+  - `LanguageSwitcher.tsx`: оставлен только русский язык (RU-only).
+  - `Connection.tsx`: скрыта кнопка "qr код" как и раньше.
+
+---
+
 ## [vX.Y.ZzN] — YYYY-MM-DD
 ### Upstream
 - База: BEDOLAGA-DEV v...

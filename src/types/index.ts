@@ -110,6 +110,31 @@ export interface SubscriptionStatusResponse {
   subscription: Subscription | null;
 }
 
+// Multi-tariff subscription list item (from GET /cabinet/subscriptions)
+export interface SubscriptionListItem {
+  id: number;
+  status: string;
+  tariff_id: number | null;
+  tariff_name: string | null;
+  traffic_limit_gb: number;
+  traffic_used_gb: number;
+  device_limit: number;
+  end_date: string | null;
+  subscription_url: string | null;
+  subscription_crypto_link: string | null;
+  is_trial: boolean;
+  is_daily?: boolean;
+  is_daily_paused?: boolean;
+  autopay_enabled: boolean;
+  connected_squads: string[] | null;
+}
+
+// Response from GET /cabinet/subscriptions (multi-tariff)
+export interface SubscriptionsListResponse {
+  subscriptions: SubscriptionListItem[];
+  multi_tariff_enabled: boolean;
+}
+
 // Device types
 export interface Device {
   hwid: string;
@@ -320,6 +345,8 @@ export interface Tariff {
   custom_days_discount_percent?: number;
   // Traffic reset
   traffic_reset_mode?: string;
+  // Multi-tariff: already purchased by user
+  is_purchased?: boolean;
 }
 
 export interface TariffsPurchaseOptions {
@@ -332,6 +359,8 @@ export interface TariffsPurchaseOptions {
   subscription_status?: string;
   subscription_is_expired?: boolean;
   has_subscription?: boolean;
+  // Multi-tariff: all available tariffs already purchased
+  all_tariffs_purchased?: boolean;
 }
 
 export interface ClassicPurchaseOptions {
@@ -419,6 +448,7 @@ export interface PaymentMethod {
 export interface ReferralInfo {
   referral_code: string;
   referral_link: string;
+  bot_referral_link?: string;
   total_referrals: number;
   active_referrals: number;
   total_earnings_kopeks: number;
@@ -473,7 +503,7 @@ export interface TicketDetail extends Omit<Ticket, 'messages_count' | 'last_mess
 
 export interface SupportConfig {
   tickets_enabled: boolean;
-  support_type: 'tickets' | 'profile' | 'url';
+  support_type: 'tickets' | 'profile' | 'url' | 'both';
   support_url?: string | null;
   support_username?: string | null;
 }
@@ -566,6 +596,7 @@ export interface PendingPayment {
   user_id?: number;
   user_telegram_id?: number;
   user_username?: string | null;
+  user_email?: string | null;
 }
 
 export interface ManualCheckResponse {

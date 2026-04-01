@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { usePlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/auth';
@@ -107,6 +108,7 @@ export default function Profile() {
     staleTime: 60000,
   });
   const isEmailAuthEnabled = emailAuthConfig?.enabled ?? true;
+  const isEmailVerificationEnabled = emailAuthConfig?.verification_enabled ?? true;
 
   // Build referral link for cabinet
   const referralLink = referralInfo?.referral_code
@@ -146,7 +148,12 @@ export default function Profile() {
   const registerEmailMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authApi.registerEmail(email, password),
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      // Backend returns merge_required when email belongs to another user
+      if (response.merge_required && response.merge_token) {
+        navigate(`/merge/${response.merge_token}`, { replace: true });
+        return;
+      }
       setSuccess(t('profile.emailSent'));
       setError(null);
       setEmail('');
@@ -249,14 +256,16 @@ export default function Profile() {
     return () => clearInterval(timer);
   }, [verificationResendCooldown]);
 
-  // Auto-focus inputs on step change
+  // Auto-focus inputs on step change (skip on Telegram — keyboard hides bottom nav)
+  const { platform: profilePlatform } = usePlatform();
   useEffect(() => {
+    if (profilePlatform === 'telegram') return;
     const timer = setTimeout(() => {
       if (changeEmailStep === 'email') newEmailInputRef.current?.focus();
       else if (changeEmailStep === 'code') codeInputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
-  }, [changeEmailStep]);
+  }, [changeEmailStep, profilePlatform]);
 
   // Auto-close success after 3s
   useEffect(() => {
@@ -474,13 +483,13 @@ export default function Profile() {
                     <span className="font-medium text-dark-100">{user.email}</span>
                     {user.email_verified ? (
                       <span className="badge-success">{t('profile.verified')}</span>
-                    ) : (
+                    ) : isEmailVerificationEnabled ? (
                       <span className="badge-warning">{t('profile.notVerified')}</span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
-                {!user.email_verified && (
+                {!user.email_verified && isEmailVerificationEnabled && (
                   <div className="rounded-linear border border-warning-500/30 bg-warning-500/10 p-4">
                     <p className="mb-4 text-sm text-warning-400">
                       {t('profile.verificationRequired')}

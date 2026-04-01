@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/auth';
 import { useHaptic } from '@/platform';
 import { useTelegramSDK } from '@/hooks/useTelegramSDK';
+import { useHeaderHeight } from '@/hooks/useHeaderHeight';
 import { useTheme } from '@/hooks/useTheme';
 import { useBranding } from '@/hooks/useBranding';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
@@ -13,7 +14,6 @@ import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { themeColorsApi } from '@/api/themeColors';
 import { isLogoPreloaded } from '@/api/branding';
 import { cn } from '@/lib/utils';
-import { UI } from '@/config/constants';
 
 import WebSocketNotifications from '@/components/WebSocketNotifications';
 import CampaignBonusNotifier from '@/components/CampaignBonusNotifier';
@@ -198,6 +198,7 @@ export function AppShell({ children }: AppShellProps) {
   const logout = useAuthStore((state) => state.logout);
   const { isFullscreen, safeAreaInset, contentSafeAreaInset, platform, isMobile } =
     useTelegramSDK();
+  const { mobile: headerHeight } = useHeaderHeight();
   const haptic = useHaptic();
   const { toggleTheme, isDark } = useTheme();
 
@@ -219,6 +220,11 @@ export function AppShell({ children }: AppShellProps) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  // Reset keyboard state on route change — prevents bottom nav staying hidden after navigation
+  useEffect(() => {
+    setIsKeyboardOpen(false);
+  }, [location.pathname]);
 
   // Keyboard detection for hiding bottom nav
   useEffect(() => {
@@ -253,7 +259,7 @@ export function AppShell({ children }: AppShellProps) {
   // Desktop navigation items
   const desktopNavItems = [
     { path: '/', label: t('nav.dashboard'), icon: HomeIcon },
-    { path: '/subscription', label: t('nav.subscription'), icon: SubscriptionIcon },
+    { path: '/subscriptions', label: t('nav.subscription'), icon: SubscriptionIcon },
     { path: '/balance', label: t('nav.balance'), icon: CreditCardIcon },
     { path: '/support', label: t('nav.support'), icon: ChatIcon },
     { path: '/info', label: t('nav.info'), icon: InfoIcon },
@@ -269,14 +275,7 @@ export function AppShell({ children }: AppShellProps) {
     haptic.impact('light');
   };
 
-  // Calculate header height based on fullscreen mode (only on mobile Telegram)
-  // On iOS: contentSafeAreaInset.top includes status bar + dynamic island + Telegram header
-  // On Android: safeAreaInset.top only includes status bar, need to add Telegram header height (~48px)
-  const telegramHeaderHeight =
-    platform === 'android' ? UI.TELEGRAM_HEADER_ANDROID_PX : UI.TELEGRAM_HEADER_IOS_PX;
-  const headerHeight = isMobileFullscreen
-    ? 64 + Math.max(safeAreaInset.top, contentSafeAreaInset.top) + telegramHeaderHeight
-    : 64;
+  // headerHeight comes from useHeaderHeight() — accounts for TG safe area in fullscreen
 
   return (
     <div className="min-h-screen">

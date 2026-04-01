@@ -115,8 +115,15 @@ export const adminApi = {
   },
 
   // Reply to ticket
-  replyToTicket: async (ticketId: number, message: string): Promise<AdminTicketMessage> => {
-    const response = await apiClient.post(`/cabinet/admin/tickets/${ticketId}/reply`, { message });
+  replyToTicket: async (
+    ticketId: number,
+    message: string,
+    media?: { media_type?: string; media_file_id?: string; media_caption?: string },
+  ): Promise<AdminTicketMessage> => {
+    const response = await apiClient.post(`/cabinet/admin/tickets/${ticketId}/reply`, {
+      message,
+      ...media,
+    });
     return response.data;
   },
 
@@ -155,15 +162,11 @@ export interface NodeStatus {
   is_disabled: boolean;
   users_online: number;
   traffic_used_bytes?: number;
-  uptime?: string;
-  xray_version?: string;
-  node_version?: string;
   last_status_message?: string;
-  xray_uptime?: string;
+  xray_uptime: number;
   is_xray_running?: boolean;
-  cpu_count?: number;
-  cpu_model?: string;
-  total_ram?: string;
+  versions?: { xray: string; node: string } | null;
+  system?: Record<string, unknown> | null;
   country_code?: string;
 }
 
